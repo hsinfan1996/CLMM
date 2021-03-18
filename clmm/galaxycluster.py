@@ -7,6 +7,7 @@ from .gcdata import GCData
 from .dataops import compute_tangential_and_cross_components, make_radial_profile
 from .theory import compute_critical_surface_density
 from .plotting import plot_profiles
+from .utils import convert_units
 
 
 class GalaxyCluster():
@@ -201,7 +202,8 @@ class GalaxyCluster():
                             tan_component_in='et', cross_component_in='ex',
                             tan_component_out='gt', cross_component_out='gx',
                             include_empty_bins=False, gal_ids_in_bins=False,
-                            add=True, table_name='profile', overwrite=True):
+                            add=True, table_name='profile', overwrite=True,
+                            one_per_bin=False):
         r"""Compute the shear or ellipticity profile of the cluster
 
         We assume that the cluster object contains information on the cross and
@@ -271,26 +273,67 @@ class GalaxyCluster():
         if 'z' not in self.galcat.columns:
             raise TypeError('Missing galaxy redshifts!')
         # Compute the binned averages and associated errors
-        profile_table, binnumber = make_radial_profile(
-            [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z')],
-            angsep=self.galcat['theta'], angsep_units='radians',
-            bin_units=bin_units, bins=bins, include_empty_bins=include_empty_bins,
-            return_binnumber=True,
-            cosmo=cosmo, z_lens=self.z)
-        # Reaname table columns
-        for i, n in enumerate([tan_component_out, cross_component_out, 'z']):
-            profile_table.rename_column(f'p_{i}', n)
-            profile_table.rename_column(f'p_{i}_err', f'{n}_err')
-        # add galaxy IDs
-        if gal_ids_in_bins:
-            if 'id' not in self.galcat.columns:
-                raise TypeError('Missing galaxy IDs!')
-            nbins = len(bins)-1 if hasattr(bins, '__len__') else bins
-            gal_ids = [list(self.galcat['id'][binnumber==i+1])
-                        for i in range(nbins)]
-            if not include_empty_bins:
-                gal_ids = [g_id for g_id in gal_ids if len(g_id)>1]
-            profile_table['gal_id'] = gal_ids
+        if one_per_bin:
+            if gal_ids_in_bins:
+                profile_table = make_radial_profile(
+                    [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z', 'id')],
+                    angsep=self.galcat['theta'], angsep_units='radians',
+                    bin_units=bin_units, bins=bins, include_empty_bins=include_empty_bins,
+                    one_per_bin=one_per_bin,
+                    return_binnumber=True,
+                    cosmo=cosmo, z_lens=self.z)
+                for i, n in enumerate([tan_component_in, cross_component_in, 'z', 'id']):
+                    profile_table.rename_column(f'comp_{i}', n)
+                    #profile_table.rename_column(f'comp_{i}_err', f'comp_{n}_err')
+            else:
+                profile_table = make_radial_profile(
+                    [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z')],
+                    angsep=self.galcat['theta'], angsep_units='radians',
+                    bin_units=bin_units, bins=bins, include_empty_bins=include_empty_bins,
+                    one_per_bin=one_per_bin,
+                    return_binnumber=True,
+                    cosmo=cosmo, z_lens=self.z)
+                for i, n in enumerate([tan_component_in, cross_component_in, 'z']):
+                    profile_table.rename_column(f'comp_{i}', n)
+                    #profile_table.rename_column(f'comp_{i}_err', f'comp_{n}_err')
+
+            setattr(self, table_name, profile_table)
+            return profile_table
+            '''
+            theta, et, ex, gal_id = zip(*sorted(zip(
+                self.galcat['theta'],
+                self.galcat[tan_component_in],
+                self.galcat[cross_component_in],
+                self.galcat['id']) ))
+            source_seps = convert_units(theta, 'radians', bin_units,
+                                    redshift=self.z, cosmo=cosmo)
+            profile_table = GCData([source_seps, et, ex, gal_id],
+                           names=('radius', tan_component_out, cross_component_out, 'gal_id'),
+                           meta={'bin_units' : bin_units}, # Add metadata
+                          )
+            '''
+        else:
+            profile_table, binnumber = make_radial_profile(
+                [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z')],
+                angsep=self.galcat['theta'], angsep_units='radians',
+                bin_units=bin_units, bins=bins, include_empty_bins=include_empty_bins,
+                one_per_bin=one_per_bin,
+                return_binnumber=True,
+                cosmo=cosmo, z_lens=self.z)
+            # Reaname table columns
+            for i, n in enumerate([tan_component_out, cross_component_out, 'z']):
+                profile_table.rename_column(f'p_{i}', n)
+                profile_table.rename_column(f'p_{i}_err', f'{n}_err')
+            # add galaxy IDs
+            if gal_ids_in_bins:
+                if 'id' not in self.galcat.columns:
+                    raise TypeError('Missing galaxy IDs!')
+                nbins = len(bins)-1 if hasattr(bins, '__len__') else bins
+                gal_ids = [list(self.galcat['id'][binnumber==i+1])
+                            for i in range(nbins)]
+                if not include_empty_bins:
+                    gal_ids = [g_id for g_id in gal_ids if len(g_id)>0]
+                profile_table['gal_id'] = gal_ids
         if add:
             profile_table.update_cosmo_ext_valid(self.galcat, cosmo, overwrite=False)
             if hasattr(self, table_name):

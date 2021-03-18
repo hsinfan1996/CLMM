@@ -254,7 +254,8 @@ def _compute_cross_shear(shear1, shear2, phi):
 def make_radial_profile(components, angsep, angsep_units, bin_units,
                         bins=10, include_empty_bins=False,
                         return_binnumber=False,
-                        cosmo=None, z_lens=None):
+                        cosmo=None, z_lens=None,
+                        one_per_bin=False):
     r"""Compute the angular profile of given components
 
     We assume that the cluster object contains information on the cross and
@@ -323,6 +324,14 @@ def make_radial_profile(components, angsep, angsep_units, bin_units,
     if not hasattr(bins, '__len__'):
         bins = make_bins(np.min(source_seps), np.max(source_seps), bins)
     # Create output table
+    if one_per_bin:
+        radius, comp_0, comp_1, comp_2, comp_3 = zip(*sorted(zip(source_seps, *components) ))
+        profile_table = GCData([radius, comp_0, comp_1, comp_2, comp_3],
+                       names=('radius', 'comp_0', 'comp_1', 'comp_2', 'comp_3'),
+                       meta={'bin_units' : bin_units}, # Add metadata
+                      )
+        return profile_table
+
     profile_table = GCData([bins[:-1], np.zeros(len(bins)-1), bins[1:]],
                            names=('radius_min', 'radius', 'radius_max'),
                            meta={'bin_units' : bin_units}, # Add metadata
