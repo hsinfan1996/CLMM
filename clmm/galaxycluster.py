@@ -7,7 +7,6 @@ from .gcdata import GCData
 from .dataops import compute_tangential_and_cross_components, make_radial_profile
 from .theory import compute_critical_surface_density
 from .plotting import plot_profiles
-from .utils import convert_units
 
 
 class GalaxyCluster():
@@ -299,19 +298,6 @@ class GalaxyCluster():
 
             setattr(self, table_name, profile_table)
             return profile_table
-            '''
-            theta, et, ex, gal_id = zip(*sorted(zip(
-                self.galcat['theta'],
-                self.galcat[tan_component_in],
-                self.galcat[cross_component_in],
-                self.galcat['id']) ))
-            source_seps = convert_units(theta, 'radians', bin_units,
-                                    redshift=self.z, cosmo=cosmo)
-            profile_table = GCData([source_seps, et, ex, gal_id],
-                           names=('radius', tan_component_out, cross_component_out, 'gal_id'),
-                           meta={'bin_units' : bin_units}, # Add metadata
-                          )
-            '''
         else:
             profile_table, binnumber = make_radial_profile(
                 [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z')],
