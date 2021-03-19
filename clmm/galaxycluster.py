@@ -306,7 +306,7 @@ class GalaxyCluster():
             gal_ids = [list(self.galcat['id'][binnumber==i+1])
                         for i in range(nbins)]
             if not include_empty_bins:
-                gal_ids = [g_id for g_id in gal_ids if len(g_id)>0]
+                gal_ids = [g_id for g_id in gal_ids if len(g_id)>1]
             profile_table['gal_id'] = gal_ids
         if add:
             profile_table.update_cosmo_ext_valid(self.galcat, cosmo, overwrite=False)
