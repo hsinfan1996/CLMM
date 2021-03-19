@@ -325,13 +325,14 @@ def make_radial_profile(components, angsep, angsep_units, bin_units,
         bins = make_bins(np.min(source_seps), np.max(source_seps), bins)
     # Create output table
     if one_per_bin:
-        radius, comp_0, comp_1, comp_2, comp_3 = zip(*sorted(zip(source_seps, *components) ))
-        profile_table = GCData([radius, comp_0, comp_1, comp_2, comp_3],
-                       names=('radius', 'comp_0', 'comp_1', 'comp_2', 'comp_3'),
-                       meta={'bin_units' : bin_units}, # Add metadata
-                      )
+        profile_table = GCData([],
+                               names=(),
+                               meta={'bin_units' : bin_units}, # Add metadata
+                              )
+        for i, component in enumerate(zip(*sorted(zip(source_seps, *components)))):
+            profile_table[f'p_{i}'] = component
+        profile_table.rename_column(f'p_0', 'radius')
         return profile_table
-
     profile_table = GCData([bins[:-1], np.zeros(len(bins)-1), bins[1:]],
                            names=('radius_min', 'radius', 'radius_max'),
                            meta={'bin_units' : bin_units}, # Add metadata
