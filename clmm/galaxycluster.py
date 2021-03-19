@@ -273,29 +273,18 @@ class GalaxyCluster():
             raise TypeError('Missing galaxy redshifts!')
         # Compute the binned averages and associated errors
         if one_per_bin:
-            if gal_ids_in_bins:
-                profile_table = make_radial_profile(
-                    [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z', 'id')],
-                    angsep=self.galcat['theta'], angsep_units='radians',
-                    bin_units=bin_units, bins=bins, include_empty_bins=include_empty_bins,
-                    one_per_bin=one_per_bin,
-                    return_binnumber=True,
-                    cosmo=cosmo, z_lens=self.z)
-                for i, n in enumerate([tan_component_out, cross_component_out, 'z', 'gal_id'], start=1):
-                    profile_table.rename_column(f'p_{i}', n)
-                    #profile_table.rename_column(f'comp_{i}_err', f'comp_{n}_err')
-            else:
-                profile_table = make_radial_profile(
-                    [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z')],
-                    angsep=self.galcat['theta'], angsep_units='radians',
-                    bin_units=bin_units, bins=bins, include_empty_bins=include_empty_bins,
-                    one_per_bin=one_per_bin,
-                    return_binnumber=True,
-                    cosmo=cosmo, z_lens=self.z)
-                for i, n in enumerate([tan_component_out, cross_component_out, 'z']):
-                    profile_table.rename_column(f'comp_{i}', n)
-                    #profile_table.rename_column(f'comp_{i}_err', f'comp_{n}_err')
-
+            profile_table = make_radial_profile(
+                [self.galcat[n].data for n in (tan_component_in, cross_component_in, 'z', 'id')],
+                angsep=self.galcat['theta'], angsep_units='radians',
+                bin_units=bin_units, bins=bins, include_empty_bins=include_empty_bins,
+                one_per_bin=one_per_bin,
+                return_binnumber=True,
+                cosmo=cosmo, z_lens=self.z)
+            for i, n in enumerate([tan_component_out, cross_component_out, 'z', 'gal_id'], start=1):
+                profile_table.rename_column(f'p_{i}', n)
+                #profile_table.rename_column(f'comp_{i}_err', f'comp_{n}_err')
+            if not gal_ids_in_bins:
+                del profile_table['gal_id']
             setattr(self, table_name, profile_table)
             return profile_table
         else:
