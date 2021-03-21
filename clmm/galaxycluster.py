@@ -280,7 +280,7 @@ class GalaxyCluster():
                 one_per_bin=one_per_bin,
                 return_binnumber=True,
                 cosmo=cosmo, z_lens=self.z)
-            for i, n in enumerate([tan_component_out, cross_component_out, 'z', 'gal_id'], start=1):
+            for i, n in enumerate([tan_component_out, cross_component_out, 'z', 'gal_id']):
                 profile_table.rename_column(f'p_{i}', n)
                 #profile_table.rename_column(f'comp_{i}_err', f'comp_{n}_err')
             if not gal_ids_in_bins:

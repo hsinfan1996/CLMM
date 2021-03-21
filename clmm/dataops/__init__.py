@@ -330,8 +330,8 @@ def make_radial_profile(components, angsep, angsep_units, bin_units,
                                meta={'bin_units' : bin_units}, # Add metadata
                               )
         for i, component in enumerate(zip(*sorted(zip(source_seps, *components)))):
-            profile_table[f'p_{i}'] = component
-        profile_table.rename_column(f'p_0', 'radius')
+            profile_table[f'p_{i-1}'] = component
+        profile_table.rename_column(f'p_-1', 'radius')
         return profile_table
     profile_table = GCData([bins[:-1], np.zeros(len(bins)-1), bins[1:]],
                            names=('radius_min', 'radius', 'radius_max'),
